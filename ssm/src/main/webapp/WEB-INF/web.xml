@@ -16,6 +16,11 @@
             <param-value>mall.WebConfig</param-value>
         </init-param>
         <load-on-startup>1</load-on-startup>
+        <multipart-config>
+            <max-file-size>1048576</max-file-size> <!-- 设置单个文件的最大大小为1MB -->
+            <max-request-size>5242880</max-request-size> <!-- 设置最大请求大小为5MB -->
+            <file-size-threshold>0</file-size-threshold>
+        </multipart-config>
     </servlet>
     <servlet-mapping>
         <servlet-name>dispatcher</servlet-name>

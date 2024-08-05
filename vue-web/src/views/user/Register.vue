@@ -1,4 +1,7 @@
 <template>
+  <head>
+    
+  </head>
   <el-form
       ref="ruleFormRef"
       :model="ruleForm"
