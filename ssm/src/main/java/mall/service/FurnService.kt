@@ -7,4 +7,6 @@ interface FurnService {
     fun save(furn: Furn): Boolean
 
     fun getAllFurn(): List<Furn>
+
+    fun deleteById(id: Int): Boolean
 }

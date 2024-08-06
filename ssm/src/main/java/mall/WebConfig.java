@@ -40,9 +40,9 @@ public class WebConfig implements WebMvcConfigurer {
     public SqlSessionFactory sqlSessionFactory(DataSource dataSource) throws Exception {
         SqlSessionFactoryBean sqlSessionFactoryBean = new SqlSessionFactoryBean();
         sqlSessionFactoryBean.setDataSource(dataSource);
-        org.apache.ibatis.session.Configuration configuration = new org.apache.ibatis.session.Configuration();
-        configuration.setLogImpl(org.apache.ibatis.logging.stdout.StdOutImpl.class);
-        sqlSessionFactoryBean.setConfiguration(configuration);
+//        org.apache.ibatis.session.Configuration configuration = new org.apache.ibatis.session.Configuration();
+//        configuration.setLogImpl(org.apache.ibatis.logging.stdout.StdOutImpl.class);
+//        sqlSessionFactoryBean.setConfiguration(configuration);
         return sqlSessionFactoryBean.getObject();
     }
 
@@ -60,6 +60,7 @@ public class WebConfig implements WebMvcConfigurer {
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")  // 允许跨域的路径
                 .allowedOrigins("http://localhost:8088")  // 允许的域
+                .allowedOrigins("https://page.51hzouo.top")
                 .allowedMethods("GET", "POST", "PUT", "DELETE")  // 允许的方法
                 .allowedHeaders("*")  // 允许的请求头
                 .allowCredentials(true)  // 是否允许发送Cookie

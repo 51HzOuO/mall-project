@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -44,7 +45,7 @@ public class FurnHandle {
 
     @PostMapping("/uploadFurnImg")
     public ResponseEntity<String> uploadFurnImg(@RequestParam("upload") MultipartFile file) throws IOException {
-        String imgPath = contextPath + "/img/" + file.getOriginalFilename();
+        String imgPath = contextPath + "/img" + file.getOriginalFilename();
         try {
             file.transferTo(new File(imgPath));
             return new ResponseEntity<>(imgPath, HttpStatus.OK);
@@ -56,6 +57,15 @@ public class FurnHandle {
     @GetMapping("/getAllFurn")
     public ResponseEntity<List<Furn>> getAllFurn() {
         return new ResponseEntity<>(furnService.getAllFurn(), HttpStatus.OK);
+    }
+
+    @DeleteMapping("/deleteFurn")
+    public ResponseEntity<String> deleteFurn(@RequestParam("id") Integer id) {
+        if (furnService.deleteById(id)) {
+            return new ResponseEntity<>("successfully", HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>("failed", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

@@ -22,4 +22,9 @@ open class FurnServiceImpl(private val sqlSessionTemplate: SqlSessionTemplate) :
         val mapper = sqlSessionTemplate.getMapper(FurnMapper::class.java)
         return mapper.selectByExample(FurnExample())
     }
+
+    override fun deleteById(id: Int): Boolean {
+        val mapper = sqlSessionTemplate.getMapper(FurnMapper::class.java)
+        return mapper.deleteByPrimaryKey(id) == 1
+    }
 }

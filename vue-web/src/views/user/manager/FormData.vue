@@ -1,8 +1,8 @@
 <script setup>
 import {Search} from "@element-plus/icons-vue";
-import {onMounted, reactive, ref, computed} from "vue";
+import {reactive, ref, computed, onBeforeMount} from "vue";
 import {genFileId} from "element-plus";
-import axios from "axios";
+import {addFurn, deleteFurn, getAllTableData, uploadFurnImg} from "@/api/index.js";
 
 const allData = ref([]);
 const tableData = computed(() => {
@@ -17,13 +17,13 @@ const currentPage = ref(1);
 const pageSize = ref(15);
 const total = computed(() => allData.value.length);
 
-onMounted(async function () {
+onBeforeMount(async function () {
   await fetchAllData();
-});
+})
 
 const fetchAllData = async () => {
   try {
-    const response = await axios.get('http://localhost:8080/getAllFurn');
+    const response = await getAllTableData()
     allData.value = response.data;
   } catch (error) {
     console.error('Error fetching data:', error);
@@ -77,11 +77,7 @@ const submitForm0 = async () => {
       if (key === 'upload' && addData[key]) {
         const upload = new FormData();
         upload.append('upload', addData[key]);
-        const imgPath = await axios.post('http://localhost:8080/uploadFurnImg', upload, {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        });
+        const imgPath = await uploadFurnImg(upload);
         formData['imgPath'] = imgPath.data;
         console.log(imgPath);
       } else {
@@ -89,11 +85,7 @@ const submitForm0 = async () => {
       }
     }
 
-    const response = await axios.post('http://localhost:8080/addFurn', formData, {
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
+    const response = await addFurn()
     console.log('Form submitted successfully:', response.data);
     insertPop.value = false;
     await fetchAllData(); // Refresh all data after adding new item
@@ -113,6 +105,16 @@ const filteredData = computed(() => {
 
 const handleSearch = () => {
   currentPage.value = 1; // 重置到第一页
+};
+
+const handleDelete = async (id) => {
+  try {
+    const response = await deleteFurn(id)
+    console.log('Delete successfully:', response.data);
+    await fetchAllData(); // Refresh all data after deleting item
+  } catch (error) {
+    console.error('Error deleting item:', error);
+  }
 };
 </script>
 
@@ -138,7 +140,11 @@ const handleSearch = () => {
     <el-table-column label="" fixed="right" width="130px">
       <template #default="scope">
         <el-button text type="primary" size="small">修改</el-button>
-        <el-button text type="danger" size="small">删除</el-button>
+        <el-popconfirm title="Are you sure to delete this?" @confirm="handleDelete(scope.row.id)">
+          <template #reference>
+            <el-button text type="danger" size="small">删除</el-button>
+          </template>
+        </el-popconfirm>
       </template>
     </el-table-column>
   </el-table>
