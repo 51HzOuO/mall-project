@@ -17,6 +17,7 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import javax.sql.DataSource;
+import java.io.File;
 import java.util.Objects;
 
 @Configuration
@@ -59,8 +60,7 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")  // 允许跨域的路径
-                .allowedOrigins("http://localhost:8088")  // 允许的域
-                .allowedOrigins("https://page.51hzouo.top")
+                .allowedOrigins("https://page.51hzouo.top", "http://localhost:8088")
                 .allowedMethods("GET", "POST", "PUT", "DELETE")  // 允许的方法
                 .allowedHeaders("*")  // 允许的请求头
                 .allowCredentials(true)  // 是否允许发送Cookie
@@ -69,6 +69,8 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Bean
     public String ContextPath() {
-        return Objects.requireNonNull(this.getClass().getResource("/")).getPath();
+        String path = Objects.requireNonNull(this.getClass().getResource("/")).getPath();
+        new File(path + "/img").mkdir();
+        return path;
     }
 }

@@ -4,6 +4,9 @@ import jakarta.validation.Valid;
 import mall.bean.Furn;
 import mall.service.FurnService;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -19,6 +22,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,8 +49,8 @@ public class FurnHandle {
     }
 
     @PostMapping("/uploadFurnImg")
-    public ResponseEntity<String> uploadFurnImg(@RequestParam("upload") MultipartFile file) throws IOException {
-        String imgPath = contextPath + "/img" + file.getOriginalFilename();
+    public ResponseEntity<String> uploadFurnImg(@RequestParam("upload") MultipartFile file) {
+        String imgPath = contextPath + "img/" + file.getOriginalFilename();
         try {
             file.transferTo(new File(imgPath));
             return new ResponseEntity<>(imgPath, HttpStatus.OK);
@@ -66,6 +71,15 @@ public class FurnHandle {
         } else {
             return new ResponseEntity<>("failed", HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @GetMapping("/getFurnImg")
+    public ResponseEntity<Resource> getFurnImg(@RequestParam("url") String url) throws IOException {
+        FileSystemResource fileSystemResource = new FileSystemResource(url);
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.CONTENT_DISPOSITION, "filename=" + fileSystemResource.getFilename());
+        headers.add(HttpHeaders.CONTENT_TYPE, Files.probeContentType(Path.of(fileSystemResource.getPath())));
+        return new ResponseEntity<>(fileSystemResource, headers, HttpStatus.OK);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

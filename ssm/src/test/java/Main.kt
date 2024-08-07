@@ -1,3 +1,5 @@
+import mall.bean.Furn
+
 fun main() {
 //    val sqlSessionFactory = SqlSessionFactoryBuilder().build(Resources.getResourceAsStream("mybatis-config.xml"))
 //    sqlSessionFactory.openSession().use { session ->
@@ -6,4 +8,5 @@ fun main() {
 //
 //        session.commit()
 //    }
+    Furn()
 }

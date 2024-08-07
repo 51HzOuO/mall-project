@@ -1,8 +1,9 @@
 <script setup>
 import {Search} from "@element-plus/icons-vue";
-import {reactive, ref, computed, onBeforeMount} from "vue";
+import {computed, onBeforeMount, reactive, ref} from "vue";
 import {genFileId} from "element-plus";
 import {addFurn, deleteFurn, getAllTableData, uploadFurnImg} from "@/api/index.js";
+import axios from "axios";
 
 const allData = ref([]);
 const tableData = computed(() => {
@@ -12,6 +13,8 @@ const tableData = computed(() => {
 });
 
 const insertPop = ref(false);
+const updateFurnPop = ref(false);
+const editingFurn = ref(null);
 const upload = ref();
 const currentPage = ref(1);
 const pageSize = ref(15);
@@ -21,6 +24,13 @@ onBeforeMount(async function () {
   await fetchAllData();
 })
 
+const fits = [
+  'fill',
+  'contain',
+  'cover',
+  'none',
+  'scale-down',
+]
 const fetchAllData = async () => {
   try {
     const response = await getAllTableData()
@@ -85,12 +95,12 @@ const submitForm0 = async () => {
       }
     }
 
-    const response = await addFurn()
+    const response = await addFurn(formData)
     console.log('Form submitted successfully:', response.data);
     insertPop.value = false;
     await fetchAllData(); // Refresh all data after adding new item
   } catch (error) {
-    console.error('Error submitting form:', error);
+    console.log('Error submitting form:', error.response.data);
   }
 };
 
@@ -116,33 +126,49 @@ const handleDelete = async (id) => {
     console.error('Error deleting item:', error);
   }
 };
+const handleEdit = (row) => {
+  editingFurn.value = {...row};
+
+  updateFurnPop.value = true;
+};
+
+const submitEditForm = async () => {
+  try {
+    const response = await updateFurn(editingFurn.value);
+    console.log('Furniture updated successfully:', response.data);
+    updateFurnPop.value = false;
+    await fetchAllData(); // Refresh all data after updating item
+  } catch (error) {
+    console.error('Error updating furniture:', error);
+  }
+};
 </script>
 
 <template>
   <div style="margin: 5px;">
     <el-input
         v-model="searchQuery"
-        style="width: 240px"
-        size="default"
-        placeholder="搜索家具名或厂商"
         :prefix-icon="Search"
+        placeholder="搜索家具名或厂商"
+        size="default"
+        style="width: 240px"
     />
-    <el-button type="primary" style="margin-left: 5px" @click="handleSearch">查询</el-button>
-    <el-button type="primary" style="margin-left: 5px;" @click="insertPop=true">添加</el-button>
+    <el-button style="margin-left: 5px" type="primary" @click="handleSearch">查询</el-button>
+    <el-button style="margin-left: 5px;" type="primary" @click="insertPop=true">添加</el-button>
   </div>
-  <el-table :data="tableData" stripe border>
-    <el-table-column prop="id" label="ID" sortable/>
-    <el-table-column prop="name" label="家具名"/>
-    <el-table-column prop="company" label="厂商"/>
-    <el-table-column prop="price" label="价格"/>
-    <el-table-column prop="sales" label="销量"/>
-    <el-table-column prop="stock" label="库存"/>
-    <el-table-column label="" fixed="right" width="130px">
+  <el-table :data="tableData" border stripe>
+    <el-table-column label="ID" prop="id" sortable/>
+    <el-table-column label="家具名" prop="name"/>
+    <el-table-column label="厂商" prop="company"/>
+    <el-table-column label="价格" prop="price"/>
+    <el-table-column label="销量" prop="sales"/>
+    <el-table-column label="库存" prop="stock"/>
+    <el-table-column fixed="right" label="" width="130px">
       <template #default="scope">
-        <el-button text type="primary" size="small">修改</el-button>
+        <el-button size="small" text type="primary" @click="handleEdit(scope.row)">修改</el-button>
         <el-popconfirm title="Are you sure to delete this?" @confirm="handleDelete(scope.row.id)">
           <template #reference>
-            <el-button text type="danger" size="small">删除</el-button>
+            <el-button size="small" text type="danger">删除</el-button>
           </template>
         </el-popconfirm>
       </template>
@@ -150,15 +176,15 @@ const handleDelete = async (id) => {
   </el-table>
   <div style="display: flex;justify-content: center;margin-top: 30px">
     <el-pagination
-        @current-change="handlePageChange"
         :current-page="currentPage"
         :page-size="pageSize"
         :total="total"
-        layout="prev, pager, next"
         background
+        layout="prev, pager, next"
+        @current-change="handlePageChange"
     />
   </div>
-  <el-dialog v-model="insertPop" title="添加家具" width="500" draggable>
+  <el-dialog v-model="insertPop" draggable title="添加家具" width="500">
     <el-form>
       <el-form-item label="家具名称">
         <el-input v-model="addData.name"></el-input>
@@ -170,17 +196,17 @@ const handleDelete = async (id) => {
         <el-input-number v-model="addData.price" :min="0" :precision="2"/>
       </el-form-item>
       <el-form-item label="库存">
-        <el-input-number v-model="addData.stock" :min="1" :max="100000"/>
+        <el-input-number v-model="addData.stock" :max="100000" :min="1"/>
       </el-form-item>
       <el-form-item label="家具图片">
         <el-upload
             ref="upload"
-            accept="image/*"
-            :limit="1"
-            :on-exceed="handleExceed"
-            :on-change="handleUploadChange"
-            :on-remove="handleRemove"
             :auto-upload="false"
+            :limit="1"
+            :on-change="handleUploadChange"
+            :on-exceed="handleExceed"
+            :on-remove="handleRemove"
+            accept="image/*"
             list-type="picture"
         >
           <template #trigger>
@@ -193,6 +219,38 @@ const handleDelete = async (id) => {
       <div class="dialog-footer">
         <el-button @click="insertPop = false">取消</el-button>
         <el-button type="primary" @click="submitForm">
+          确认
+        </el-button>
+      </div>
+    </template>
+  </el-dialog>
+
+  <el-dialog v-model="updateFurnPop" draggable title="修改家具" width="500">
+    <el-form v-if="editingFurn">
+      <el-form-item label="家具名称">
+        <el-input v-model="editingFurn.name"></el-input>
+      </el-form-item>
+      <el-form-item label="厂商">
+        <el-input v-model="editingFurn.company"></el-input>
+      </el-form-item>
+      <el-form-item label="价格">
+        <el-input-number v-model="editingFurn.price" :min="0" :precision="2"/>
+      </el-form-item>
+      <el-form-item label="库存">
+        <el-input-number v-model="editingFurn.stock" :max="100000" :min="1"/>
+      </el-form-item>
+      <el-form-item>
+        <el-image
+            :fit="fits"
+            :src="axios.defaults.baseURL+'/getFurnImg?url='+editingFurn.imgPath"
+            style="width: 800px">
+        </el-image>
+      </el-form-item>
+    </el-form>
+    <template #footer>
+      <div class="dialog-footer">
+        <el-button @click="updateFurnPop = false">取消</el-button>
+        <el-button type="primary" @click="submitEditForm">
           确认
         </el-button>
       </div>
