@@ -1,8 +1,8 @@
 <script setup>
 import {Search} from "@element-plus/icons-vue";
-import {computed, onBeforeMount, reactive, ref} from "vue";
+import {computed, onBeforeMount, reactive, ref, toRaw} from "vue";
 import {genFileId} from "element-plus";
-import {addFurn, deleteFurn, getAllTableData, uploadFurnImg} from "@/api/index.js";
+import {addFurn, deleteFurn, getAllTableData, updateFurn, uploadFurnImg} from "@/api/index.js";
 import axios from "axios";
 
 const allData = ref([]);
@@ -79,17 +79,19 @@ const submitForm = () => {
   upload.value.clearFiles();
 };
 
+const handleUploadImg = (upload) => {
+  const form = new FormData();
+  form.append('upload', upload);
+  return uploadFurnImg(form)
+}
+
 const submitForm0 = async () => {
   try {
     const formData = {};
 
     for (const key in addData) {
       if (key === 'upload' && addData[key]) {
-        const upload = new FormData();
-        upload.append('upload', addData[key]);
-        const imgPath = await uploadFurnImg(upload);
-        formData['imgPath'] = imgPath.data;
-        console.log(imgPath);
+        formData['imgPath'] = (await handleUploadImg(addData[key])).data
       } else {
         formData[key] = addData[key];
       }
@@ -128,13 +130,14 @@ const handleDelete = async (id) => {
 };
 const handleEdit = (row) => {
   editingFurn.value = {...row};
-
   updateFurnPop.value = true;
 };
 
 const submitEditForm = async () => {
   try {
-    const response = await updateFurn(editingFurn.value);
+    if (addData['upload'])
+      editingFurn.value.imgPath = (await handleUploadImg(addData['upload'])).data
+    const response = await updateFurn(toRaw(editingFurn.value));
     console.log('Furniture updated successfully:', response.data);
     updateFurnPop.value = false;
     await fetchAllData(); // Refresh all data after updating item
@@ -236,6 +239,9 @@ const submitEditForm = async () => {
       <el-form-item label="价格">
         <el-input-number v-model="editingFurn.price" :min="0" :precision="2"/>
       </el-form-item>
+      <el-form-item label="销量">
+        <el-input-number v-model="editingFurn.sales" :min="0"/>
+      </el-form-item>
       <el-form-item label="库存">
         <el-input-number v-model="editingFurn.stock" :max="100000" :min="1"/>
       </el-form-item>
@@ -246,6 +252,20 @@ const submitEditForm = async () => {
             style="width: 800px">
         </el-image>
       </el-form-item>
+      <el-upload
+          ref="upload"
+          :auto-upload="false"
+          :limit="1"
+          :on-change="handleUploadChange"
+          :on-exceed="handleExceed"
+          :on-remove="handleRemove"
+          accept="image/*"
+          list-type="picture"
+      >
+        <template #trigger>
+          <el-button type="primary">上传图片</el-button>
+        </template>
+      </el-upload>
     </el-form>
     <template #footer>
       <div class="dialog-footer">

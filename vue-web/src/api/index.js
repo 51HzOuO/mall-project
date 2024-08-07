@@ -46,4 +46,8 @@ export const addFurn = (formData) => axios.post('/addFurn', formData, {
 
 export const deleteFurn = (id) => axios.delete(`/deleteFurn?id=${id}`)
 
-export const getFurnImg = (url) => axios.get(`/getFurnImg?url=${url}`)
+export const updateFurn = (formData) => axios.put('/updateFurn', formData, {
+    headers: {
+        'Content-Type': 'application/json'
+    }
+});

@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -22,11 +23,14 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @RestController
 public class FurnHandle {
@@ -77,9 +81,22 @@ public class FurnHandle {
     public ResponseEntity<Resource> getFurnImg(@RequestParam("url") String url) throws IOException {
         FileSystemResource fileSystemResource = new FileSystemResource(url);
         HttpHeaders headers = new HttpHeaders();
-        headers.add(HttpHeaders.CONTENT_DISPOSITION, "filename=" + fileSystemResource.getFilename());
-        headers.add(HttpHeaders.CONTENT_TYPE, Files.probeContentType(Path.of(fileSystemResource.getPath())));
+        String filename = fileSystemResource.getFilename();
+        String encodedFilename = URLEncoder.encode(Objects.requireNonNull(filename), StandardCharsets.UTF_8).replaceAll("\\+", "%20");
+        headers.add(HttpHeaders.CONTENT_DISPOSITION, "inline; filename*=UTF-8''" + encodedFilename);
+
+        headers.add(HttpHeaders.CONTENT_TYPE, Files.probeContentType(Paths.get(fileSystemResource.getURI())));
         return new ResponseEntity<>(fileSystemResource, headers, HttpStatus.OK);
+    }
+
+
+    @PutMapping("/updateFurn")
+    public ResponseEntity<String> updateFurn(@Valid @RequestBody Furn furn) {
+        if (furnService.updateFurn(furn)) {
+            return new ResponseEntity<>("successfully", HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>("failed", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

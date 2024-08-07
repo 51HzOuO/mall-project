@@ -27,4 +27,9 @@ open class FurnServiceImpl(private val sqlSessionTemplate: SqlSessionTemplate) :
         val mapper = sqlSessionTemplate.getMapper(FurnMapper::class.java)
         return mapper.deleteByPrimaryKey(id) == 1
     }
+
+    override fun updateFurn(furn: Furn): Boolean {
+        val mapper = sqlSessionTemplate.getMapper(FurnMapper::class.java)
+        return mapper.updateByPrimaryKeySelective(furn) == 1
+    }
 }

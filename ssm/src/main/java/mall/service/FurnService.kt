@@ -9,4 +9,6 @@ interface FurnService {
     fun getAllFurn(): List<Furn>
 
     fun deleteById(id: Int): Boolean
+
+    fun updateFurn(furn: Furn): Boolean
 }
