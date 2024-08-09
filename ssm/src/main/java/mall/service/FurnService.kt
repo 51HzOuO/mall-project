@@ -11,4 +11,6 @@ interface FurnService {
     fun deleteById(id: Int): Boolean
 
     fun updateFurn(furn: Furn): Boolean
+
+    fun getFurnWithQuery(query: String): List<Furn>
 }

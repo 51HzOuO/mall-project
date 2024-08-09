@@ -1,24 +1,29 @@
 <script setup>
 import {Search} from "@element-plus/icons-vue";
-import {computed, onBeforeMount, reactive, ref, toRaw} from "vue";
-import {genFileId} from "element-plus";
-import {addFurn, deleteFurn, getAllTableData, updateFurn, uploadFurnImg} from "@/api/index.js";
+import {computed, onBeforeMount, reactive, ref, toRaw, watch} from "vue";
+import {ElMessage, genFileId} from "element-plus";
+import {addFurn, deleteFurn, getAllFurnByPage, updateFurn, uploadFurnImg} from "@/api/index.js";
 import axios from "axios";
 
-const allData = ref([]);
-const tableData = computed(() => {
-  const start = (currentPage.value - 1) * pageSize.value;
-  const end = start + pageSize.value;
-  return allData.value.slice(start, end);
-});
+const tableData = ref([])
 
+
+const total = ref(0);
 const insertPop = ref(false);
 const updateFurnPop = ref(false);
 const editingFurn = ref(null);
 const upload = ref();
 const currentPage = ref(1);
-const pageSize = ref(15);
-const total = computed(() => allData.value.length);
+const pageSize = 15;
+
+
+const fetchAllData = async () => {
+  const response = await getAllFurnByPage(currentPage.value, pageSize, searchQuery.value);
+  tableData.value = response.data.list;
+  total.value = response.data.total;
+};
+
+watch(currentPage, fetchAllData)
 
 onBeforeMount(async function () {
   await fetchAllData();
@@ -31,18 +36,6 @@ const fits = [
   'none',
   'scale-down',
 ]
-const fetchAllData = async () => {
-  try {
-    const response = await getAllTableData()
-    allData.value = response.data;
-  } catch (error) {
-    console.error('Error fetching data:', error);
-  }
-};
-
-const handlePageChange = (page) => {
-  currentPage.value = page;
-};
 
 const addData = reactive({
   name: "",
@@ -70,13 +63,6 @@ const handleRemove = () => {
 const submitForm = () => {
   submitForm0();
   console.log('Submitting form with data:', addData);
-  insertPop.value = false;
-  addData.name = "";
-  addData.company = "";
-  addData.price = 0.0;
-  addData.stock = 1;
-  addData.upload = null;
-  upload.value.clearFiles();
 };
 
 const handleUploadImg = (upload) => {
@@ -99,10 +85,24 @@ const submitForm0 = async () => {
 
     const response = await addFurn(formData)
     console.log('Form submitted successfully:', response.data);
+    ElMessage({
+      message: 'success!',
+      type: 'success',
+    })
     insertPop.value = false;
+    addData.name = "";
+    addData.company = "";
+    addData.price = 0.0;
+    addData.stock = 1;
+    addData.upload = null;
+    upload.value.clearFiles();
     await fetchAllData(); // Refresh all data after adding new item
   } catch (error) {
     console.log('Error submitting form:', error.response.data);
+    ElMessage({
+      message: 'error!',
+      type: 'error',
+    })
   }
 };
 
@@ -116,7 +116,7 @@ const filteredData = computed(() => {
 });
 
 const handleSearch = () => {
-  currentPage.value = 1; // 重置到第一页
+  fetchAllData(searchQuery)
 };
 
 const handleDelete = async (id) => {
@@ -139,6 +139,10 @@ const submitEditForm = async () => {
       editingFurn.value.imgPath = (await handleUploadImg(addData['upload'])).data
     const response = await updateFurn(toRaw(editingFurn.value));
     console.log('Furniture updated successfully:', response.data);
+    ElMessage({
+      message: 'success',
+      type: 'success',
+    })
     updateFurnPop.value = false;
     await fetchAllData(); // Refresh all data after updating item
   } catch (error) {
@@ -179,12 +183,10 @@ const submitEditForm = async () => {
   </el-table>
   <div style="display: flex;justify-content: center;margin-top: 30px">
     <el-pagination
-        :current-page="currentPage"
+        v-model:current-page="currentPage"
         :page-size="pageSize"
         :total="total"
         background
-        layout="prev, pager, next"
-        @current-change="handlePageChange"
     />
   </div>
   <el-dialog v-model="insertPop" draggable title="添加家具" width="500">

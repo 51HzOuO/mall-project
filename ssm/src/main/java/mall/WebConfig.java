@@ -1,6 +1,7 @@
 package mall;
 
 import com.alibaba.druid.pool.DruidDataSource;
+import com.github.pagehelper.PageInterceptor;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.SqlSessionFactoryBean;
 import org.mybatis.spring.SqlSessionTemplate;
@@ -44,6 +45,14 @@ public class WebConfig implements WebMvcConfigurer {
 //        org.apache.ibatis.session.Configuration configuration = new org.apache.ibatis.session.Configuration();
 //        configuration.setLogImpl(org.apache.ibatis.logging.stdout.StdOutImpl.class);
 //        sqlSessionFactoryBean.setConfiguration(configuration);
+        PageInterceptor pageInterceptor = new PageInterceptor();
+        pageInterceptor.setProperties(new java.util.Properties() {{
+            setProperty("helperDialect", "mysql");
+            setProperty("reasonable", "true");
+            setProperty("supportMethodsArguments", "true");
+            setProperty("params", "count=countSql");
+        }});
+        sqlSessionFactoryBean.addPlugins(pageInterceptor);
         return sqlSessionFactoryBean.getObject();
     }
 
@@ -60,8 +69,7 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")  // 允许跨域的路径
-                .allowedOrigins("https://page.51hzouo.top", "http://localhost:8088")
-                .allowedMethods("GET", "POST", "PUT", "DELETE")  // 允许的方法
+                .allowedOrigins("https://page.51hzouo.top", "http://localhost:8088").allowedMethods("GET", "POST", "PUT", "DELETE")  // 允许的方法
                 .allowedHeaders("*")  // 允许的请求头
                 .allowCredentials(true)  // 是否允许发送Cookie
                 .maxAge(3600);  // 预检请求的缓存时间

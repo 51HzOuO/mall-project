@@ -32,4 +32,13 @@ open class FurnServiceImpl(private val sqlSessionTemplate: SqlSessionTemplate) :
         val mapper = sqlSessionTemplate.getMapper(FurnMapper::class.java)
         return mapper.updateByPrimaryKeySelective(furn) == 1
     }
+
+    override fun getFurnWithQuery(query: String): List<Furn> {
+        val mapper = sqlSessionTemplate.getMapper(FurnMapper::class.java)
+        return mapper.selectByExample(FurnExample().apply {
+            val criteria = this.createCriteria()
+            criteria.andNameLike("%${query}%")
+            or().andCompanyLike("%${query}%")
+        })
+    }
 }

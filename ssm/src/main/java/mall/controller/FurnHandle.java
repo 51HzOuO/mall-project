@@ -1,5 +1,7 @@
 package mall.controller;
 
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
 import jakarta.validation.Valid;
 import mall.bean.Furn;
 import mall.service.FurnService;
@@ -9,6 +11,8 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
+import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -28,7 +32,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -44,7 +47,12 @@ public class FurnHandle {
     }
 
     @PostMapping("/addFurn")
-    public ResponseEntity<String> addFurn(@Valid @RequestBody Furn furn) {
+    public ResponseEntity<Object> addFurn(@Valid @RequestBody Furn furn, BindingResult bindingResult) {
+        if (bindingResult.hasErrors()) {
+            HashMap<String, Object> map = new HashMap<>();
+            bindingResult.getAllErrors().forEach(e -> map.put(((FieldError) e).getField(), e.getDefaultMessage()));
+            return new ResponseEntity<>(map, HttpStatus.BAD_REQUEST);
+        }
         if (furnService.save(furn)) {
             return new ResponseEntity<>("successfully", HttpStatus.OK);
         } else {
@@ -61,11 +69,6 @@ public class FurnHandle {
         } catch (IOException | IllegalStateException e) {
             return new ResponseEntity<>("failed", HttpStatus.INTERNAL_SERVER_ERROR);
         }
-    }
-
-    @GetMapping("/getAllFurn")
-    public ResponseEntity<List<Furn>> getAllFurn() {
-        return new ResponseEntity<>(furnService.getAllFurn(), HttpStatus.OK);
     }
 
     @DeleteMapping("/deleteFurn")
@@ -97,6 +100,12 @@ public class FurnHandle {
         } else {
             return new ResponseEntity<>("failed", HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @GetMapping("/getAllFurnByPage")
+    public PageInfo<Furn> getAllFurnByPage(@RequestParam("pageNum") Integer pageNum, @RequestParam("pageSize") Integer pageSize, @RequestParam("query") String query) {
+        PageHelper.startPage(pageNum, pageSize);
+        return StringUtils.hasText(query) ? new PageInfo<>(furnService.getFurnWithQuery(query.trim())) : new PageInfo<>(furnService.getAllFurn());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

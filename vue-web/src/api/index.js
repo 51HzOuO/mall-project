@@ -2,31 +2,6 @@ import axios from "axios";
 
 axios.defaults.baseURL = 'http://localhost:8080';
 
-/**
- * @returns {Promise<axios.AxiosResponse<any>>}
- * 预期的返回值：
- * [
- *     {
- *         "id": 1,
- *         "name": "可达鸭",
- *         "company": "com",
- *         "price": 321.00,
- *         "sales": 0,
- *         "stock": 123,
- *         "imgPath": "test"
- *     },
- *     {
- *         "id": 10,
- *         "name": "123",
- *         "company": "321",
- *         "price": 3.00,
- *         "sales": 0,
- *         "stock": 2,
- *         "imgPath": "test"
- *     }
- * ]
- */
-export const getAllTableData = () => axios.get('/getAllFurn')
 
 /**
  * @param upload FormData
@@ -51,3 +26,29 @@ export const updateFurn = (formData) => axios.put('/updateFurn', formData, {
         'Content-Type': 'application/json'
     }
 });
+
+/**
+ * @returns {Promise<axios.AxiosResponse<any>>}
+ * 预期的返回值：
+ * [
+ *     {
+ *         "id": 1,
+ *         "name": "可达鸭",
+ *         "company": "com",
+ *         "price": 321.00,
+ *         "sales": 0,
+ *         "stock": 123,
+ *         "imgPath": "test"
+ *     },
+ *     {
+ *         "id": 10,
+ *         "name": "123",
+ *         "company": "321",
+ *         "price": 3.00,
+ *         "sales": 0,
+ *         "stock": 2,
+ *         "imgPath": "test"
+ *     }
+ * ]
+ */
+export const getAllFurnByPage = (pageNum, pageSize, query) => axios.get(`/getAllFurnByPage?pageNum=${pageNum}&pageSize=${pageSize}&query=${query}`)
